@@ -3,13 +3,12 @@ package page
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-type PageResult[T any] struct {
+type Result[T any] struct {
 	CurrentPage int `json:"current_page"`
 	TotalPage   int `json:"total_page"`
 	PageSize    int `json:"page_size"`
@@ -17,11 +16,11 @@ type PageResult[T any] struct {
 	Data        []T `json:"data"`
 }
 
-func QueryPageGin[T any](db *gorm.DB, c *gin.Context) (*PageResult[T], error) {
-	return QueryPage[T](db, c.Query("page"), c.Query("size"), parserSort(c))
+func GinQuery[T any](db *gorm.DB, c *gin.Context) (*Result[T], error) {
+	return Query[T](db, c.Query("page"), c.Query("size"), c.Query("sort"))
 }
 
-func QueryPage[T any](db *gorm.DB, pageI, sizeI any, order string) (*PageResult[T], error) {
+func Query[T any](db *gorm.DB, pageI, sizeI any, order string) (*Result[T], error) {
 	page, err := toInt(pageI)
 	if err != nil {
 		return nil, err
@@ -37,7 +36,7 @@ func QueryPage[T any](db *gorm.DB, pageI, sizeI any, order string) (*PageResult[
 		size = 20
 	}
 
-	result := PageResult[T]{
+	result := Result[T]{
 		CurrentPage: page,
 		PageSize:    size,
 	}
@@ -60,20 +59,6 @@ func QueryPage[T any](db *gorm.DB, pageI, sizeI any, order string) (*PageResult[
 	}
 	result.TotalPage = totalPage
 	return &result, nil
-}
-
-func parserSort(c *gin.Context) string {
-	query, b := c.GetQuery("sort")
-	if !b || query == "" {
-		return ""
-	}
-	if strings.HasSuffix(query, "_ASC") || strings.HasSuffix(query, "_asc") {
-		return query[:len(query)-4] + " ASC"
-	}
-	if strings.HasSuffix(query, "_desc") || strings.HasSuffix(query, "_desc") {
-		return query[:len(query)-5] + " DESC"
-	}
-	return query + " ASC"
 }
 
 func toInt(i any) (int, error) {

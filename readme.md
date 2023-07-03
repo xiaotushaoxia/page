@@ -1,3 +1,7 @@
+# 基于gorm的简单分页工具
+
+用法示例
+```go
 package page
 
 import (
@@ -8,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var db *gorm.DB // need init
+var db *gorm.DB // init
 
 type area struct {
 	Id        int
@@ -24,12 +28,11 @@ type location struct {
 }
 
 func TestQueryPage(t *testing.T) {
-	// 根据自己需要给db填入条件
+    // 根据自己需要给db填入条件
 	tx := db.Where("id in (?)", []int{1, 2, 3, 4})
 	tx = db.Preload("locations")
 
 	page, err := Query[area](tx, 1, 10, "id desc")
-	// page, err := Query[*area](tx, 1, 10, "id desc") 也可以，需要指针还是值
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -38,9 +41,9 @@ func TestQueryPage(t *testing.T) {
 }
 
 func TestGinQuery(t *testing.T) {
-	// GinQuery是对Query的简单封装
+	// GinQuery是对Query的简单封装。（因为我个人gin用的多，所以有这个东西）
 	// RequestURI: /area/query?page=2&size=10&sort=id desc,name,size
-	// 排序条件和sql语法一致
+	// sort里的排序条件和sql语法一致
 }
 
 func QueryArea(c *gin.Context) {
@@ -51,3 +54,4 @@ func QueryArea(c *gin.Context) {
 	}
 	c.JSON(200, query)
 }
+```
